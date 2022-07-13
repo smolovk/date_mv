@@ -36,6 +36,12 @@ fn main() {
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
+        Err(rexif::ExifError::FileTypeUnknown) => {
+            println!("Not an image, trying to take from file metadata...");
+            let metadata = fs::metadata(&args.path).unwrap();
+            let datetime: DateTime<Local> = metadata.created().unwrap().into();
+            datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
+        }
         Err(error) => return println!("Unexpected error: {}", error),
     };
 
