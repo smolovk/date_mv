@@ -2,10 +2,13 @@ use chrono::{DateTime, Local};
 use clap::Parser;
 use std::fs;
 
+/// Program to rename file to its creation date (uses exif if possible)
 #[derive(Parser)]
 struct Cli {
+    /// Path to file/directory to rename
     path: std::path::PathBuf,
 
+    /// Use if need to rename all files within directory
     #[clap(short = 'd', long = "directory")]
     is_directory: bool,
 }
