@@ -10,7 +10,11 @@ struct Cli {
 fn main() {
     let args = Cli::parse();
 
-    let buff = fs::read(&args.path).unwrap();
+    rename_file(&args.path);
+}
+
+fn rename_file(path: &std::path::PathBuf) {
+    let buff = fs::read(&path).unwrap();
     let exif = rexif::parse_buffer(&buff);
 
     let creation_date = match exif {
@@ -35,13 +39,13 @@ fn main() {
         }
         Err(rexif::ExifError::JpegWithoutExif(_)) => {
             println!("Image has no exif information, trying to take from file metadata...");
-            let metadata = fs::metadata(&args.path).unwrap();
+            let metadata = fs::metadata(&path).unwrap();
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
         Err(rexif::ExifError::FileTypeUnknown) => {
             println!("Not an image, trying to take from file metadata...");
-            let metadata = fs::metadata(&args.path).unwrap();
+            let metadata = fs::metadata(&path).unwrap();
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
@@ -54,9 +58,9 @@ fn main() {
     }
 
     //rename the file
-    let file_path = String::from(args.path.parent().unwrap().to_str().unwrap());
-    let extension = args.path.extension().unwrap().to_str().unwrap();
+    let file_path = String::from(path.parent().unwrap().to_str().unwrap());
+    let extension = path.extension().unwrap().to_str().unwrap();
     let new_filename = file_path + "/" + &creation_date + "." + extension;
     println!("{}", &new_filename);
-    fs::rename(&args.path, new_filename).unwrap()
+    fs::rename(&path, new_filename).unwrap()
 }
