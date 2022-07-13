@@ -14,7 +14,16 @@ fn main() {
 }
 
 fn rename_file(path: &std::path::PathBuf) {
-    let buff = fs::read(&path).unwrap();
+    let buff = fs::read(&path);
+    let buff = match buff {
+        Ok(buff) => buff,
+        Err(error) => {
+            if error.kind() == std::io::ErrorKind::NotFound {
+                return println!("No such file or directory")
+            }
+            return println!("{}", error)
+        }
+    };
     let exif = rexif::parse_buffer(&buff);
 
     let creation_date = match exif {
@@ -49,7 +58,7 @@ fn rename_file(path: &std::path::PathBuf) {
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
-        Err(error) => return println!("Unexpected error: {}", error),
+        Err(error) => return println!("Unexpected error: {}", error)
     };
 
     if creation_date == *"" {
