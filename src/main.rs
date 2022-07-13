@@ -23,8 +23,11 @@ fn main() {
                 }
             }
             if let Some(value) = date {
-                //TODO: Format this string
-                value.to_string()
+                let date_string = value.to_string();
+                let datetime =
+                    chrono::NaiveDateTime::parse_from_str(&date_string, "%Y:%m:%d %H:%M:%S")
+                        .unwrap();
+                datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
             } else {
                 println!("No date found");
                 String::from("")
