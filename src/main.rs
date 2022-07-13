@@ -5,12 +5,34 @@ use std::fs;
 #[derive(Parser)]
 struct Cli {
     path: std::path::PathBuf,
+
+    #[clap(short = 'd', long = "directory")]
+    is_directory: bool,
 }
 
 fn main() {
     let args = Cli::parse();
 
-    rename_file(&args.path);
+    if !args.is_directory{
+        return rename_file(&args.path);
+    }
+
+    let files = get_files_from_dir(&args.path);
+    for file in files {
+        rename_file(&file)
+    }
+}
+
+fn get_files_from_dir(path: &std::path::PathBuf) -> Vec<std::path::PathBuf> {
+    let mut files: Vec<std::path::PathBuf> = Vec::new();
+    for entry in fs::read_dir(path).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if path.is_file() {
+            files.push(path);
+        }
+    }
+    files
 }
 
 fn rename_file(path: &std::path::PathBuf) {
@@ -47,13 +69,11 @@ fn rename_file(path: &std::path::PathBuf) {
             }
         }
         Err(rexif::ExifError::JpegWithoutExif(_)) => {
-            println!("Image has no exif information, trying to take from file metadata...");
             let metadata = fs::metadata(&path).unwrap();
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
         Err(rexif::ExifError::FileTypeUnknown) => {
-            println!("Not an image, trying to take from file metadata...");
             let metadata = fs::metadata(&path).unwrap();
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
