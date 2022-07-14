@@ -16,7 +16,7 @@ struct Cli {
 fn main() {
     let args = Cli::parse();
 
-    if !args.is_directory{
+    if !args.is_directory {
         return rename_file(&args.path);
     }
 
@@ -44,9 +44,9 @@ fn rename_file(path: &std::path::PathBuf) {
         Ok(buff) => buff,
         Err(error) => {
             if error.kind() == std::io::ErrorKind::NotFound {
-                return println!("No such file or directory")
+                return println!("No such file or directory");
             }
-            return println!("{}", error)
+            return println!("{}", error);
         }
     };
     let exif = rexif::parse_buffer(&buff);
@@ -81,7 +81,7 @@ fn rename_file(path: &std::path::PathBuf) {
             let datetime: DateTime<Local> = metadata.created().unwrap().into();
             datetime.format("%Y_%m_%d-%H_%M_%S").to_string()
         }
-        Err(error) => return println!("Unexpected error: {}", error)
+        Err(error) => return println!("Unexpected error: {}", error),
     };
 
     if creation_date == *"" {
