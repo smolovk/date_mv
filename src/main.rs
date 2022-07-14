@@ -96,3 +96,20 @@ fn rename_file(path: &std::path::PathBuf) {
     println!("{}", &new_filename);
     fs::rename(&path, new_filename).unwrap()
 }
+
+#[test]
+fn renames_file() {
+    // create temporary directory to test renaming in
+    fs::create_dir("./tmp").unwrap();
+
+    let file_path = std::path::PathBuf::from("./tmp/test_image.jpg");
+
+    fs::copy("./test_image.jpg", &file_path).unwrap();
+
+    rename_file(&file_path);
+
+    assert!(std::path::Path::new("./tmp/2008_07_31-10_05_49.jpg").exists());
+
+    // delete the temporary directory
+    fs::remove_dir_all("./tmp").unwrap();
+}
