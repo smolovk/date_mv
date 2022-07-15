@@ -17,12 +17,12 @@ fn main() {
     let args = Cli::parse();
 
     if !args.is_directory {
-        return rename_file(&args.path);
+        return rename_file(&args.path, None);
     }
 
     let files = get_files_from_dir(&args.path);
-    for file in files {
-        rename_file(&file)
+    for (index, file) in files.iter().enumerate() {
+        rename_file(&file, Some(&index))
     }
 }
 
@@ -38,7 +38,7 @@ fn get_files_from_dir(path: &std::path::PathBuf) -> Vec<std::path::PathBuf> {
     files
 }
 
-fn rename_file(path: &std::path::PathBuf) {
+fn rename_file(path: &std::path::PathBuf, index: Option<&usize>) {
     let buff = fs::read(&path);
     let buff = match buff {
         Ok(buff) => buff,
@@ -92,24 +92,58 @@ fn rename_file(path: &std::path::PathBuf) {
     //rename the file
     let file_path = String::from(path.parent().unwrap().to_str().unwrap());
     let extension = path.extension().unwrap().to_str().unwrap();
-    let new_filename = file_path + "/" + &creation_date + "." + extension;
+    let mut new_filename = file_path.clone() + "/" + &creation_date + "." + extension;
+    if std::path::Path::new(&new_filename).exists() {
+        new_filename = file_path + "/" + &creation_date + "(" + &index.unwrap_or(&0usize).to_string() + ")." + extension;
+    }
     println!("{}", &new_filename);
     fs::rename(&path, new_filename).unwrap()
 }
 
 #[test]
 fn renames_file() {
-    // create temporary directory to test renaming in
-    fs::create_dir("./tmp").unwrap();
+    let testing_dir = std::path::Path::new("./tmp/renames_file");
+    if testing_dir.exists() {
+        fs::remove_dir_all(&testing_dir).unwrap();
+    }
 
-    let file_path = std::path::PathBuf::from("./tmp/test_image.jpg");
+    // create temporary directory to test renaming in
+    fs::create_dir_all(&testing_dir).unwrap();
+
+    let file_path = std::path::PathBuf::from(&testing_dir).join("test_image.jpg");
 
     fs::copy("./test_image.jpg", &file_path).unwrap();
 
-    rename_file(&file_path);
+    rename_file(&file_path, None);
 
-    assert!(std::path::Path::new("./tmp/2008_07_31-10_05_49.jpg").exists());
+    assert!(testing_dir.to_path_buf().join("2008_07_31-10_05_49.jpg").exists());
 
     // delete the temporary directory
-    fs::remove_dir_all("./tmp").unwrap();
+    fs::remove_dir_all(testing_dir).unwrap();
+}
+
+#[test]
+fn renames_dir() {
+    let testing_dir = std::path::Path::new("./tmp/renames_dir");
+    if testing_dir.exists() {
+        fs::remove_dir_all(&testing_dir).unwrap();
+    }
+
+    fs::create_dir_all(&testing_dir).unwrap();
+
+    let file_path = std::path::PathBuf::from(&testing_dir).join("test_image.jpg");
+    let second_file_path = std::path::PathBuf::from(&testing_dir).join("second_test_image.jpg");
+
+    fs::copy("./test_image.jpg", &file_path).unwrap();
+    fs::copy("./test_image.jpg", &second_file_path).unwrap();
+
+    let files = get_files_from_dir(&std::path::PathBuf::from(&testing_dir));
+    for (index, file) in files.iter().enumerate() {
+        rename_file(&file, Some(&index))
+    }
+
+    assert!(testing_dir.to_path_buf().join("2008_07_31-10_05_49.jpg").exists());
+    assert!(testing_dir.to_path_buf().join("2008_07_31-10_05_49(1).jpg").exists());
+
+    fs::remove_dir_all(testing_dir).unwrap();
 }
